@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema({
     fullName: {
@@ -38,10 +39,29 @@ const userSchema = new mongoose.Schema({
     isOnboarded: {
         type: Boolean,
         default: ""
-    }
+    },
+    friends:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }]
 }, {timestamps:true})
 
 
 const user = mongoose.model("User", userSchema);
+
+//prehook
+userSchema.pre("save", async(next)=>{
+
+    if(!this.isModified("password")) return next();
+    
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+
+    } catch (error) {
+        next(error);
+    }
+} )
 
 export default user;
